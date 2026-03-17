@@ -87,7 +87,7 @@ if menu == "Home":
 
     st.title("Crime Against Women Prediction Using Machine Learning")
 
-    st.image("https://cdn.dribbble.com/users/1787323/screenshots/11073040/data_visualization.gif")
+    # st.image("https://cdn.dribbble.com/users/1787323/screenshots/11073040/data_visualization.gif")
 
     st.markdown("""
     ### Project Overview

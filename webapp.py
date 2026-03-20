@@ -14,7 +14,7 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 # ---------------- PAGE CONFIG ---------------- #
 st.set_page_config(
     page_title="Crime Against Women Prediction",
-    page_icon="🚨",
+    page_icon="fevicon.png",
     layout="wide",
     initial_sidebar_state="expanded"
 )

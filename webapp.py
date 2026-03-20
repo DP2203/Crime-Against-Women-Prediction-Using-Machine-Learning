@@ -92,7 +92,7 @@ st.sidebar.caption("© 2026 Crime ML System")
 # ---------------- HOME ---------------- #
 if menu == "🏠 Home":
 
-    st.title("Crime Against Women Prediction Using Machine Learning")
+    st.title("Data-Driven Insights into Women’s Safety in India: Forecasting Crime Trends")
 
     st.markdown("""
     ### Project Overview

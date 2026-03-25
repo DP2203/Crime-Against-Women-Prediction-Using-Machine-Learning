@@ -210,13 +210,26 @@ elif menu == "🔐 Login":
             st.success("Logged in Successfully")
             st.header("Crime Against Women Prediction Using Machine Learning")
 
-            data_file = st.file_uploader("Upload Crime Data CSV", type=["csv"])
+            # 🔥 UPDATED FILE UPLOADER
+            data_file = st.file_uploader(
+                "Upload Crime Data (CSV / Excel)",
+                type=["csv", "xlsx", "xls"]
+            )
+
             data = None
 
             if data_file is not None:
-                data = pd.read_csv(data_file)
-                st.write("### Data Preview")
-                st.write(data.head())
+                try:
+                    if data_file.name.endswith(".csv"):
+                        data = pd.read_csv(data_file)
+                    else:
+                        data = pd.read_excel(data_file)
+
+                    st.write("### Data Preview")
+                    st.write(data.head())
+
+                except Exception as e:
+                    st.error(f"Error reading file: {e}")
 
             if data is not None:
 
@@ -256,7 +269,10 @@ elif menu == "🔐 Login":
 
                 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-                selected_model = st.selectbox("Select Model", ["Linear Regression","Random Forest","Decision Tree","Gradient Boosting"])
+                selected_model = st.selectbox(
+                    "Select Model",
+                    ["Linear Regression","Random Forest","Decision Tree","Gradient Boosting"]
+                )
 
                 models = {
                     "Linear Regression": MultiOutputRegressor(LinearRegression()),

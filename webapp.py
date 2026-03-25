@@ -1,4 +1,8 @@
-
+import streamlit as st
+import pandas as pd
+import numpy as np
+import sqlite3
+import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -31,8 +35,6 @@ section[data-testid="stSidebar"] {
 .main {
     margin-left: 260px;
 }
-
-/* Button styling */
 .stButton>button {
     background: linear-gradient(90deg, #4CAF50, #2E8B57);
     color: white;
@@ -51,11 +53,7 @@ c = conn.cursor()
 
 c.execute('''CREATE TABLE IF NOT EXISTS users
              (id INTEGER PRIMARY KEY,
-             name TEXT,
-             city TEXT,
-             Pincode TEXT,
              email TEXT UNIQUE,
-             mobile TEXT,
              password TEXT)''')
 conn.commit()
 
@@ -98,7 +96,7 @@ if menu == "🏠 Home":
     """)
 
 
-# ---------------- SIGN UP (UPDATED) ---------------- #
+# ---------------- SIGN UP ---------------- #
 elif menu == "✨ Sign Up":
 
     st.markdown("""
@@ -127,8 +125,8 @@ elif menu == "✨ Sign Up":
             else:
                 try:
                     c.execute(
-                        "INSERT INTO users (name, city, Pincode, email, mobile, password) VALUES (?, ?, ?, ?, ?, ?)",
-                        ("User", "N/A", "000000", email, "0000000000", password)
+                        "INSERT INTO users (email, password) VALUES (?, ?)",
+                        (email, password)
                     )
                     conn.commit()
                     st.success("✅ Account created successfully! Please login.")
@@ -185,30 +183,26 @@ elif menu == "🔐 Login":
             st.success("Logged In as Admin")
             st.subheader("👨‍💼 Admin Dashboard")
 
-            col1, col2 = st.columns(2)
+            if st.button("📋 View All Users"):
+                c.execute("SELECT email, password FROM users")
+                users = c.fetchall()
 
-            with col1:
-                if st.button("📋 View All Users"):
-                    c.execute("SELECT name, city, Pincode, email, mobile FROM users")
-                    users = c.fetchall()
+                if users:
+                    df = pd.DataFrame(users, columns=["Email", "Password"])
+                    st.dataframe(df)
+                else:
+                    st.info("No users found")
 
-                    if users:
-                        df = pd.DataFrame(users, columns=["Name","City","Pincode","Email","Mobile"])
-                        st.dataframe(df)
-                    else:
-                        st.info("No users found")
+            st.markdown("### 🗑 Delete User")
+            del_email = st.text_input("Enter Email")
 
-            with col2:
-                st.markdown("### 🗑 Delete User")
-                del_email = st.text_input("Enter Email")
-
-                if st.button("Delete User"):
-                    if del_email:
-                        c.execute("DELETE FROM users WHERE email=?", (del_email,))
-                        conn.commit()
-                        st.success("User Deleted Successfully")
-                    else:
-                        st.warning("Enter email first")
+            if st.button("Delete User"):
+                if del_email:
+                    c.execute("DELETE FROM users WHERE email=?", (del_email,))
+                    conn.commit()
+                    st.success("User Deleted Successfully")
+                else:
+                    st.warning("Enter email first")
 
         # ---------------- USER DASHBOARD ---------------- #
         elif st.session_state.role == "user":
@@ -266,36 +260,48 @@ elif menu == "🔐 Login":
 
                 models = {
                     "Linear Regression": MultiOutputRegressor(LinearRegression()),
-                    "Random Forest": RandomForestRegressor(max_depth=10, n_estimators=10, random_state=0),
-                    "Decision Tree": DecisionTreeRegressor(),
+                    "Random Forest": MultiOutputRegressor(RandomForestRegressor(max_depth=10, n_estimators=50, random_state=0)),
+                    "Decision Tree": MultiOutputRegressor(DecisionTreeRegressor()),
                     "Gradient Boosting": MultiOutputRegressor(GradientBoostingRegressor())
                 }
 
                 model = models[selected_model]
                 model.fit(X_train, y_train)
+
                 y_pred = model.predict(X_test)
+                if len(y_pred.shape) == 1:
+                    y_pred = y_pred.reshape(-1, 1)
 
                 st.write(f"### Model : {selected_model}")
 
                 for i, target in enumerate(target_options):
-                    st.write(f"**{target} R2 Score:** {r2_score(y_test[target], y_pred[:, i]):.4f}")
-                    st.write(f"**{target} MSE:** {mean_squared_error(y_test[target], y_pred[:, i]):.4f}")
-                    st.write(f"**{target} MAE:** {mean_absolute_error(y_test[target], y_pred[:, i]):.4f}")
-                    st.write(f"**{target} RMSE:** {np.sqrt(mean_squared_error(y_test[target], y_pred[:, i])):.4f}")
+                    actual = y_test[target].values
+                    predicted = y_pred[:, i]
+
+                    st.write(f"**{target} R2 Score:** {r2_score(actual, predicted):.4f}")
+                    st.write(f"**{target} MSE:** {mean_squared_error(actual, predicted):.4f}")
+                    st.write(f"**{target} MAE:** {mean_absolute_error(actual, predicted):.4f}")
+                    st.write(f"**{target} RMSE:** {np.sqrt(mean_squared_error(actual, predicted)):.4f}")
 
                 fig, ax = plt.subplots(figsize=(10,6))
+
+                pred_full = model.predict(X)
+                if len(pred_full.shape) == 1:
+                    pred_full = pred_full.reshape(-1, 1)
 
                 if year_column:
                     years = data[year_column]
                     for target in target_options:
+                        idx = target_options.index(target)
                         ax.plot(years, data[target], marker='o', label=f'Actual {target}')
-                        ax.plot(years, model.predict(X)[:, target_options.index(target)], linestyle='--')
+                        ax.plot(years, pred_full[:, idx], linestyle='--')
                     ax.set_xlabel("Year")
                 else:
                     r = np.arange(len(X))
                     for target in target_options:
+                        idx = target_options.index(target)
                         ax.plot(r, data[target], label=f'Actual {target}')
-                        ax.plot(r, model.predict(X)[:, target_options.index(target)], linestyle='--')
+                        ax.plot(r, pred_full[:, idx], linestyle='--')
 
                 ax.legend()
                 st.pyplot(fig)
@@ -317,6 +323,9 @@ elif menu == "🔐 Login":
                         else:
                             test_df = pd.DataFrame([test_values], columns=columns)
                             predictions = model.predict(test_df)
+
+                            if len(predictions.shape) == 1:
+                                predictions = predictions.reshape(1, -1)
 
                             for i, target in enumerate(target_options):
                                 st.write(f"Predicted {target} cases in 2026 : {predictions[0, i]:.2f}")

@@ -80,8 +80,23 @@ if st.session_state.login_status:
         st.session_state.role = None
         st.rerun()
 
-st.sidebar.markdown("---")
-st.sidebar.caption("© 2026 Crime ML System")
+st.sidebar.markdown(
+    """
+    <style>
+    .sidebar-footer {
+        position: fixed;
+        bottom: 10px;
+        left: 20px;
+        font-size: 15px;
+        color: gray;
+    }
+    </style>
+    <div class="sidebar-footer">
+        © 2026 Crime ML System
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 
 # ---------------- HOME ---------------- #

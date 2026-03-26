@@ -114,6 +114,6 @@ Example requirements.txt
 
 ## Author
 
-Divy Patel\
+Patel Divyakumar\
 BE Computer Engineering\
 Sigma Institute of Engineering

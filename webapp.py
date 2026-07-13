@@ -341,27 +341,50 @@ elif menu == "📊 Dashboard":
                 )
                 train_submitted = st.form_submit_button("🚀 Train Model")
 
-            if not train_submitted:
+            if train_submitted:
+                if len(columns) == 0 or len(target_options) == 0:
+                    st.warning("Please select features and target variables")
+                    st.stop()
+
+                X = data[columns]
+                y = data[target_options]
+
+                X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+                models = {
+                    "Linear Regression": MultiOutputRegressor(LinearRegression()),
+                    "Random Forest": MultiOutputRegressor(RandomForestRegressor(max_depth=10, n_estimators=50, random_state=0)),
+                    "Decision Tree": MultiOutputRegressor(DecisionTreeRegressor()),
+                    "Gradient Boosting": MultiOutputRegressor(GradientBoostingRegressor())
+                }
+
+                model = models[selected_model]
+                model.fit(X_train, y_train)
+
+                # 🔥 persist everything needed for prediction across reruns
+                st.session_state.trained_model = model
+                st.session_state.trained_columns = columns
+                st.session_state.trained_targets = target_options
+                st.session_state.trained_selected_model = selected_model
+                st.session_state.trained_X = X
+                st.session_state.trained_X_test = X_test
+                st.session_state.trained_y_test = y_test
+                st.session_state.trained_data = data
+                st.session_state.trained_year_column = year_column
+
+            if "trained_model" not in st.session_state:
+                st.info("Select features/target and click 'Train Model' to get started")
                 st.stop()
 
-            if len(columns) == 0 or len(target_options) == 0:
-                st.warning("Please select features and target variables")
-                st.stop()
-
-            X = data[columns]
-            y = data[target_options]
-
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-            models = {
-                "Linear Regression": MultiOutputRegressor(LinearRegression()),
-                "Random Forest": MultiOutputRegressor(RandomForestRegressor(max_depth=10, n_estimators=50, random_state=0)),
-                "Decision Tree": MultiOutputRegressor(DecisionTreeRegressor()),
-                "Gradient Boosting": MultiOutputRegressor(GradientBoostingRegressor())
-            }
-
-            model = models[selected_model]
-            model.fit(X_train, y_train)
+            model = st.session_state.trained_model
+            columns = st.session_state.trained_columns
+            target_options = st.session_state.trained_targets
+            selected_model = st.session_state.trained_selected_model
+            X = st.session_state.trained_X
+            X_test = st.session_state.trained_X_test
+            y_test = st.session_state.trained_y_test
+            data = st.session_state.trained_data
+            year_column = st.session_state.trained_year_column
 
             y_pred = model.predict(X_test)
             if len(y_pred.shape) == 1:

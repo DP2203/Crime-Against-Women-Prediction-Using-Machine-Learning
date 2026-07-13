@@ -79,9 +79,10 @@ if "menu" not in st.session_state:
 menu_options = ["🏠 Home", "✨ Sign Up", "🔐 Login", "📊 Dashboard"]
 
 menu = st.sidebar.selectbox(
-    "",
+    "Navigation",
     menu_options,
-    index=menu_options.index(st.session_state.menu)
+    index=menu_options.index(st.session_state.menu),
+    label_visibility="collapsed"
 )
 
 # 🔥 update selected menu

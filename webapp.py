@@ -1,10 +1,3 @@
-import os
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
-os.environ["NUMEXPR_NUM_THREADS"] = "1"
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -86,10 +79,9 @@ if "menu" not in st.session_state:
 menu_options = ["🏠 Home", "✨ Sign Up", "🔐 Login", "📊 Dashboard"]
 
 menu = st.sidebar.selectbox(
-    "Navigation",
+    "",
     menu_options,
-    index=menu_options.index(st.session_state.menu),
-    label_visibility="collapsed"
+    index=menu_options.index(st.session_state.menu)
 )
 
 # 🔥 update selected menu
@@ -339,59 +331,32 @@ elif menu == "📊 Dashboard":
             year_column = 'Year' if 'Year' in data.columns else None
             column_options = list(data.columns[2:])
 
-            with st.form("train_form"):
-                columns = st.multiselect("Select Crime Features", column_options, default=column_options[:5])
-                target_options = st.multiselect("Select Target Variables", column_options, default=[column_options[0]])
-                selected_model = st.selectbox(
-                    "Select Model",
-                    ["Linear Regression","Random Forest","Decision Tree","Gradient Boosting"]
-                )
-                train_submitted = st.form_submit_button("🚀 Train Model")
+            columns = st.multiselect("Select Crime Features", column_options, default=column_options[:5])
+            target_options = st.multiselect("Select Target Variables", column_options, default=[column_options[0]])
 
-            if train_submitted:
-                if len(columns) == 0 or len(target_options) == 0:
-                    st.warning("Please select features and target variables")
-                    st.stop()
-
-                X = data[columns]
-                y = data[target_options]
-
-                X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-                models = {
-                    "Linear Regression": MultiOutputRegressor(LinearRegression()),
-                    "Random Forest": MultiOutputRegressor(RandomForestRegressor(max_depth=10, n_estimators=50, random_state=0, n_jobs=1)),
-                    "Decision Tree": MultiOutputRegressor(DecisionTreeRegressor()),
-                    "Gradient Boosting": MultiOutputRegressor(GradientBoostingRegressor())
-                }
-
-                model = models[selected_model]
-                model.fit(X_train, y_train)
-
-                # 🔥 persist everything needed for prediction across reruns
-                st.session_state.trained_model = model
-                st.session_state.trained_columns = columns
-                st.session_state.trained_targets = target_options
-                st.session_state.trained_selected_model = selected_model
-                st.session_state.trained_X = X
-                st.session_state.trained_X_test = X_test
-                st.session_state.trained_y_test = y_test
-                st.session_state.trained_data = data
-                st.session_state.trained_year_column = year_column
-
-            if "trained_model" not in st.session_state:
-                st.info("Select features/target and click 'Train Model' to get started")
+            if len(columns) == 0 or len(target_options) == 0:
+                st.warning("Please select features and target variables")
                 st.stop()
 
-            model = st.session_state.trained_model
-            columns = st.session_state.trained_columns
-            target_options = st.session_state.trained_targets
-            selected_model = st.session_state.trained_selected_model
-            X = st.session_state.trained_X
-            X_test = st.session_state.trained_X_test
-            y_test = st.session_state.trained_y_test
-            data = st.session_state.trained_data
-            year_column = st.session_state.trained_year_column
+            X = data[columns]
+            y = data[target_options]
+
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+            selected_model = st.selectbox(
+                "Select Model",
+                ["Linear Regression","Random Forest","Decision Tree","Gradient Boosting"]
+            )
+
+            models = {
+                "Linear Regression": MultiOutputRegressor(LinearRegression()),
+                "Random Forest": MultiOutputRegressor(RandomForestRegressor(max_depth=10, n_estimators=50, random_state=0)),
+                "Decision Tree": MultiOutputRegressor(DecisionTreeRegressor()),
+                "Gradient Boosting": MultiOutputRegressor(GradientBoostingRegressor())
+            }
+
+            model = models[selected_model]
+            model.fit(X_train, y_train)
 
             y_pred = model.predict(X_test)
             if len(y_pred.shape) == 1:
@@ -430,7 +395,6 @@ elif menu == "📊 Dashboard":
 
             ax.legend()
             st.pyplot(fig)
-            plt.close(fig)
 
             predefined_values = ', '.join(map(str, X.iloc[-1].values))
 

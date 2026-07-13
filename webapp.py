@@ -1,3 +1,10 @@
+import os
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -353,7 +360,7 @@ elif menu == "📊 Dashboard":
 
                 models = {
                     "Linear Regression": MultiOutputRegressor(LinearRegression()),
-                    "Random Forest": MultiOutputRegressor(RandomForestRegressor(max_depth=10, n_estimators=50, random_state=0)),
+                    "Random Forest": MultiOutputRegressor(RandomForestRegressor(max_depth=10, n_estimators=50, random_state=0, n_jobs=1)),
                     "Decision Tree": MultiOutputRegressor(DecisionTreeRegressor()),
                     "Gradient Boosting": MultiOutputRegressor(GradientBoostingRegressor())
                 }
